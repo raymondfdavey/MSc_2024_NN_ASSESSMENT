@@ -1,0 +1,13 @@
+Intro
+
+Through structured experimentation this assignment explores and tried to demonstrates a number of roperties of artificial Neural networks. Using the CIFAR 10 dataset and classification task and a relatively simple convolutional neural network, the effect that a number of network and paramaeter choices shall be explored. 
+
+Looking first at varying learning rates and learning rate decay then at dropout for regularisation, transfer learning and batch normalisation, it is hoped that a number of important and essential properties shall be described and demonstrated. 
+
+Whilst the aim of the task is not strictly to aim for best peformance, the impacy that the different tecnicques and choices make on performance shall be discussed. 
+
+It shall be shown that.........
+
+
+training dynamics and performance of    
+
