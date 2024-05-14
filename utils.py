@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch.nn.functional as F
 import torch.optim as optim
-from torchsummary import summary
+# from torchsummary import summary
 from torch.utils.data import DataLoader, random_split
 from sklearn.metrics import classification_report
 import pandas as pd
