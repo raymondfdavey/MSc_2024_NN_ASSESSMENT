@@ -34,7 +34,7 @@ As already mentioned, the data used in this assignment is the CIFAR-10 dataset d
 
 The Cifar-10 dataset, along with many others, is available for download via a conveient Pytorch `datasets` method which uses a boolean flag to enable the user to load both the 50,000 training images and 10,000 test images into separate `torch.Dataset` instances extremely easily, and this was the method used here. As part of this process it is possible to apply manual transforms to the data as it is loaded. Using the `Normalize` method the data so that the pixel values of each of the 3 input channels for all of the datasets has a mean of 0 and and a standard deviation of 1, the idea being to focus the learning on the underlying properties of the data rather than any incidental variance in the raw data.  
 
-The training set consisting of 50,000 labelled samples was then split to create a validation or development set of 5000 samples (with a random seed set for consistence). The final numbers for training, validation and testing then were 45,000, 5,000 and 10,000 respectively. The class distribution for for each dataset were checked and found to be well balanced which means that accuracy should be a reliable measure of overall performance of the model on test data.
+The training set consisting of 50,000 labelled samples was then split to create a validation or development set of 5000 samples (with a random seed set for consistence). The final numbers for training, validation and testing then were 45,000, 5,000 and 10,000 respectively. The class distribution for for each dataset were checked and found to be well balanced which means that accuracy should be a reliable measure of overall performance of the model on test data. (althgouh this differed in experiments 2 and 3)
 
 Batching for stochastic gradient descent was handled by the `DataLoader` class, which yields samples from the shuffled dataset without replacement in batches of a size that can be specified by the user until the data has been exhauted. The data is then shuffled again and new batches are drawn from the newly shuffled data so that the batches in every epoch were different, encouraging more stoacasticity - a key element in SGD being said to approximat the true gradient of the loss. 
 
@@ -87,6 +87,11 @@ The max pooling layers with a pool size of 2x2 and stride of 2 help to reduce th
 Overall, these choices strike a balance between model complexity, computational efficiency, and the ability to learn meaningful features from the CIFAR-10 dataset.
 
 Owing to the number of training runs required to get accurate, averages results, parameter size was a legitimate consideration as it impacted on training time signfiriantly.  
+
+```
+The choice of ReLU (Rectified Linear Unit) as the activation function throughout the BaselineNet architecture is based on its proven effectiveness and computational efficiency. ReLU has become the default activation function for many deep learning models due to its ability to alleviate the vanishing gradient problem and promote sparse representations [ReLU_Advantages]. It introduces non-linearity into the network, allowing it to learn complex patterns and representations. ReLU is computationally efficient compared to other activation functions like sigmoid or tanh, as it involves a simple thresholding operation. This efficiency enables faster training and inference times. Additionally, ReLU has been shown to accelerate convergence during training by providing a consistent gradient flow [ReLU_Convergence].
+Overall, these choices strike a balance between model complexity, computational efficiency, and the ability to learn meaningful features from the CIFAR-10 dataset. Owing to the number of training runs required to get accurate, averages results, parameter size was a legitimate consideration as it impacted on training time signfiriantly.
+```
 
 
 
