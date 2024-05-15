@@ -247,6 +247,32 @@ class BatchNormNet(nn.Module):
         x = F.relu(self.bn4(self.fc1(x)))
         x = self.fc2(x)
         return x
+    
+class BatchNormNet_2(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(32)
+        self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1)
+        self.bn3 = nn.BatchNorm2d(64)
+        self.fc1 = nn.Linear(in_features=64 * 4 * 4, out_features=128)
+        self.bn4 = nn.BatchNorm1d(128)
+        self.fc2 = nn.Linear(in_features=128, out_features=10)
+
+    def forward(self, x):
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = self.pool(x)
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = self.pool(x)
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = self.pool(x)
+        x = torch.flatten(x, 1)
+        x = F.relu(self.bn4(self.fc1(x)))
+        x = self.fc2(x)
+        return x
 
 def plot_adjusting_lr(initial_lr=0.1, decay_rate=0.01, num_epochs=50):
     print('ADJUSTING!')
@@ -354,160 +380,242 @@ def plot_all_models_performance_from_disk(path_to_load, variable_name=None, enfo
     for variable_val, data in averaged_results.items():
         plot_single_model_performance(data, title=f'Training/Validation Losses and Accuracy for {variable_name} = {variable_val} across', enforce_axis=enforce_axis)
 
-def plot_performance_comparison_from_file(path_to_load, enforce_axis=False, smooth_window=5):
+# def plot_performance_comparison_from_file(path_to_load, enforce_axis=False, smooth_window=5, variable_name=None):
+#     with open(path_to_load, 'r') as file:
+#         results = json.load(file)
+#     learning_rates = list(results.keys())
+#     num_epochs = len(results[learning_rates[0]]['av_train_losses'])
+
+#     # Set the figure size
+#     fig_size = (12, 16)
+
+#     # Create a single figure with a 4x2 grid of subplots
+#     fig, ((ax_train_loss, ax_train_acc), (ax_val_loss, ax_val_acc),
+#           (ax_train_loss_smoothed, ax_train_acc_smoothed),
+#           (ax_val_loss_smoothed, ax_val_acc_smoothed)) = plt.subplots(4, 2, figsize=fig_size)
+#     title_offset = 1.5 / 2.54
+
+#     # Add main titles above each pair of plots
+#     fig.text(0.5, 0.99, 'Performance During Training (averages)', ha='center', fontsize=14)
+#     fig.text(0.5, 0.74, 'Performance During Validation (averages)', ha='center', fontsize=14)
+#     fig.text(0.5, 0.50, 'Performance During Training (smoothed)', ha='center', fontsize=14)
+#     fig.text(0.5, 0.25, 'Performance During Validation (smoothed)', ha='center', fontsize=14)
+
+#     # Plot average training loss
+#     for lr in learning_rates:
+#         ax_train_loss.plot(range(1, num_epochs + 1), results[lr]['av_train_losses'], label=str(lr))
+#     ax_train_loss.set_xlabel('Epoch')
+#     ax_train_loss.set_ylabel('Average Training Loss')
+#     ax_train_loss.set_title('Losses')
+#     ax_train_loss.legend(title=variable_name, loc='lower right')
+
+#     # Plot average training accuracy
+#     for lr in learning_rates:
+#         ax_train_acc.plot(range(1, num_epochs + 1), results[lr]['av_train_acc'], label=str(lr))
+#     ax_train_acc.set_xlabel('Epoch')
+#     ax_train_acc.set_ylabel('Average Training Accuracy')
+#     ax_train_acc.set_title('Accuracies')
+#     ax_train_acc.legend(title=variable_name, loc='lower right')
+
+#     # Plot average validation loss
+#     for lr in learning_rates:
+#         ax_val_loss.plot(range(1, num_epochs + 1), results[lr]['av_val_losses'], label=str(lr))
+#     ax_val_loss.set_xlabel('Epoch')
+#     ax_val_loss.set_ylabel('Average Validation Loss')
+#     ax_val_loss.set_title('Losses')
+#     ax_val_loss.legend(title=variable_name, loc='lower right')
+
+#     # Plot average validation accuracy
+#     for lr in learning_rates:
+#         ax_val_acc.plot(range(1, num_epochs + 1), results[lr]['av_val_acc'], label=str(lr))
+#     ax_val_acc.set_xlabel('Epoch')
+#     ax_val_acc.set_ylabel('Average Validation Accuracy')
+#     ax_val_acc.set_title('Accuracies')
+#     ax_val_acc.legend(title=variable_name, loc='lower right')
+
+#     # Plot smoothed training loss
+#     for lr in learning_rates:
+#         smoothed_train_loss = np.convolve(results[lr]['av_train_losses'], np.ones(smooth_window) / smooth_window, mode='valid')
+#         ax_train_loss_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_train_loss, label=str(lr))
+#     ax_train_loss_smoothed.set_xlabel('Epoch')
+#     ax_train_loss_smoothed.set_ylabel('Smoothed Training Loss')
+#     ax_train_loss_smoothed.set_title('Losses (Smoothed)')
+#     ax_train_loss_smoothed.legend(title=variable_name, loc='upper right')
+
+#     # Plot smoothed training accuracy
+#     for lr in learning_rates:
+#         smoothed_train_acc = np.convolve(results[lr]['av_train_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
+#         ax_train_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_train_acc, label=str(lr))
+#     ax_train_acc_smoothed.set_xlabel('Epoch')
+#     ax_train_acc_smoothed.set_ylabel('Smoothed Training Accuracy')
+#     ax_train_acc_smoothed.set_title('Accuracies (Smoothed)')
+#     ax_train_acc_smoothed.legend(title=variable_name, loc='lower right')
+
+#     # Plot smoothed validation loss
+#     for lr in learning_rates:
+#         smoothed_val_loss = np.convolve(results[lr]['av_val_losses'], np.ones(smooth_window) / smooth_window, mode='valid')
+#         ax_val_loss_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_val_loss, label=str(lr))
+#     ax_val_loss_smoothed.set_xlabel('Epoch')
+#     ax_val_loss_smoothed.set_ylabel('Smoothed Validation Loss')
+#     ax_val_loss_smoothed.set_title('Losses (Smoothed)')
+#     ax_val_loss_smoothed.legend(title=variable_name, loc='upper right')
+
+#     # Plot smoothed validation accuracy
+#     for lr in learning_rates:
+#         smoothed_val_acc = np.convolve(results[lr]['av_val_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
+#         ax_val_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_val_acc, label=str(lr))
+#     ax_val_acc_smoothed.set_xlabel('Epoch')
+#     ax_val_acc_smoothed.set_ylabel('Smoothed Validation Accuracy')
+#     ax_val_acc_smoothed.set_title('Accuracies (Smoothed)')
+#     ax_val_acc_smoothed.legend(title=variable_name, loc='lower right')
+
+#     if enforce_axis:
+#         ax_val_acc.set_ylim(0, 1)
+#         ax_val_loss.set_ylim(0, 5)
+#         ax_train_acc.set_ylim(0, 1)
+#         ax_train_loss.set_ylim(0, 5)
+#         ax_val_acc_smoothed.set_ylim(0, 1)
+#         ax_val_loss_smoothed.set_ylim(0, 5)
+#         ax_train_acc_smoothed.set_ylim(0, 1)
+#         ax_train_loss_smoothed.set_ylim(0, 5)
+
+#     plt.tight_layout()  # Adjust the spacing and positioning of subplots
+#     plt.show()
+#     # Create an additional figure based on the number of items being compared
+#     if len(learning_rates) > 2:
+#         fig_acc, (ax_train_acc_new, ax_val_acc_new) = plt.subplots(1, 2, figsize=(12, 4))
+#         fig_acc.suptitle('Comparative Accuracies', fontsize=12)
+#         # Plot training accuracy
+#         for lr in learning_rates:
+#             ax_train_acc_new.plot(range(1, num_epochs + 1), results[lr]['av_train_acc'], label=str(lr))
+#         ax_train_acc_new.set_xlabel('Epoch')
+#         ax_train_acc_new.set_ylabel('Average Training Accuracy')
+#         ax_train_acc_new.set_title('Training Accuracy')
+#         ax_train_acc_new.legend(title=variable_name, loc='lower right')
+        
+#         # Plot validation accuracy
+#         for lr in learning_rates:
+#             ax_val_acc_new.plot(range(1, num_epochs + 1), results[lr]['av_val_acc'], label=str(lr))
+#         ax_val_acc_new.set_xlabel('Epoch')
+#         ax_val_acc_new.set_ylabel('Average Validation Accuracy')
+#         ax_val_acc_new.set_title('Validation Accuracy')
+#         ax_val_acc_new.legend(title=variable_name, loc='lower right')
+#         if enforce_axis:
+#             ax_val_acc.set_ylim(0, 1)
+#             ax_train_acc.set_ylim(0, 1)
+#         plt.tight_layout()
+#         plt.show()
+#         # Create a new figure for smoothed accuracies
+#         fig_acc_smoothed, (ax_train_acc_smoothed, ax_val_acc_smoothed) = plt.subplots(1, 2, figsize=(12, 4))
+#         fig_acc_smoothed.suptitle('Comparative Accuracies (Smoothed)', fontsize=12)
+        
+#         # Plot smoothed training accuracy
+#         for lr in learning_rates:
+#             smoothed_train_acc = np.convolve(results[lr]['av_train_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
+#             ax_train_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_train_acc, label=str(lr))
+#         ax_train_acc_smoothed.set_xlabel('Epoch')
+#         ax_train_acc_smoothed.set_ylabel('Average Training Accuracy (Smoothed)')
+#         ax_train_acc_smoothed.set_title('Training Accuracy (Smoothed)')
+#         ax_train_acc_smoothed.legend(title=variable_name, loc='lower right')
+        
+#         # Plot smoothed validation accuracy
+#         for lr in learning_rates:
+#             smoothed_val_acc = np.convolve(results[lr]['av_val_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
+#             ax_val_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_val_acc, label=str(lr))
+#         ax_val_acc_smoothed.set_xlabel('Epoch')
+#         ax_val_acc_smoothed.set_ylabel('Average Validation Accuracy (Smoothed)')
+#         ax_val_acc_smoothed.set_title('Validation Accuracy (Smoothed)')
+#         ax_val_acc_smoothed.legend(title=variable_name, loc='lower right')
+        
+#         if enforce_axis:
+#             ax_val_acc_smoothed.set_ylim(0, 1)
+#             ax_train_acc_smoothed.set_ylim(0, 1)
+        
+#         plt.tight_layout()
+#         plt.show()
+
+#     elif len(learning_rates) == 2:
+#         fig_acc_two, ax_acc_two = plt.subplots(figsize=(6, 4))
+#         fig_acc_two.suptitle('Comparative Accuracies', fontsize=12)
+
+#         for lr in learning_rates:
+#             ax_acc_two.plot(range(1, num_epochs + 1), results[lr]['av_val_acc'], label=f"Validation ({lr})", linestyle='-')
+#             ax_acc_two.plot(range(1, num_epochs + 1), results[lr]['av_train_acc'], label=f"Training ({lr})", linestyle='--')
+        
+#         ax_acc_two.set_xlabel('Epoch')
+#         ax_acc_two.set_ylabel('Accuracy')
+#         ax_acc_two.set_title('Accuracy Comparison')
+#         ax_acc_two.legend(loc='lower right')
+        
+#         if enforce_axis:
+#             ax_acc_two.set_ylim(0, 1)
+            
+#         plt.tight_layout()
+#         plt.show()
+            
+#             # Create an additional figure for smoothed accuracies
+#         fig_acc_smoothed, (ax_val_acc_smoothed, ax_train_acc_smoothed) = plt.subplots(1, 2, figsize=(12, 4))
+#         fig_acc_smoothed.suptitle('Comparative Accuracies (Smoothed)', fontsize=12)
+
+#         # Plot smoothed validation accuracy
+#         for lr in learning_rates:
+#             smoothed_val_acc = np.convolve(results[lr]['av_val_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
+#             ax_val_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2), smoothed_val_acc, label=str(lr))
+
+#         ax_val_acc_smoothed.set_xlabel('Epoch')
+#         ax_val_acc_smoothed.set_ylabel('Average Validation Accuracy (Smoothed)')
+#         ax_val_acc_smoothed.set_title('Validation Accuracy (Smoothed)')
+#         ax_val_acc_smoothed.legend(title=variable_name, loc='upper right')
+
+#         # Plot smoothed training accuracy
+#         for lr in learning_rates:
+#             smoothed_train_acc = np.convolve(results[lr]['av_train_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
+#         ax_train_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2), smoothed_train_acc, label=str(lr))
+
+#         ax_train_acc_smoothed.set_xlabel('Epoch')
+#         ax_train_acc_smoothed.set_ylabel('Average Training Accuracy (Smoothed)')
+#         ax_train_acc_smoothed.set_title('Training Accuracy (Smoothed)')
+#         ax_train_acc_smoothed.legend(title=variable_name, loc='lower right')
+
+#         if enforce_axis:
+#             ax_val_acc_smoothed.set_ylim(0, 1)
+#             ax_train_acc_smoothed.set_ylim(0, 1)
+            
+            
+#         plt.tight_layout()
+#         plt.show()
+
+def plot_performance_comparison_from_file(path_to_load, enforce_axis=False, smooth_window=4, variable_name=None):
     with open(path_to_load, 'r') as file:
         results = json.load(file)
     learning_rates = list(results.keys())
     num_epochs = len(results[learning_rates[0]]['av_train_losses'])
 
-    # Set the figure size
     fig_size = (12, 16)
-
-    # Create a single figure with a 4x2 grid of subplots
     fig, ((ax_train_loss, ax_train_acc), (ax_val_loss, ax_val_acc),
           (ax_train_loss_smoothed, ax_train_acc_smoothed),
           (ax_val_loss_smoothed, ax_val_acc_smoothed)) = plt.subplots(4, 2, figsize=fig_size)
-    title_offset = 1.5 / 2.54
 
-    # Add main titles above each pair of plots
-    fig.text(0.5, 0.99, 'Performance During Training (averages)', ha='center', fontsize=14)
-    fig.text(0.5, 0.74, 'Performance During Validation (averages)', ha='center', fontsize=14)
-    fig.text(0.5, 0.50, 'Performance During Training (smoothed)', ha='center', fontsize=14)
-    fig.text(0.5, 0.25, 'Performance During Validation (smoothed)', ha='center', fontsize=14)
-
-    # Plot average training loss
-    for lr in learning_rates:
-        ax_train_loss.plot(range(1, num_epochs + 1), results[lr]['av_train_losses'], label=str(lr))
-    ax_train_loss.set_xlabel('Epoch')
-    ax_train_loss.set_ylabel('Average Training Loss')
-    ax_train_loss.set_title('Losses')
-    ax_train_loss.legend(title='Learning Rates', loc='lower right')
-
-    # Plot average training accuracy
-    for lr in learning_rates:
-        ax_train_acc.plot(range(1, num_epochs + 1), results[lr]['av_train_acc'], label=str(lr))
-    ax_train_acc.set_xlabel('Epoch')
-    ax_train_acc.set_ylabel('Average Training Accuracy')
-    ax_train_acc.set_title('Accuracies')
-    ax_train_acc.legend(title='Learning Rates', loc='lower right')
-
-    # Plot average validation loss
-    for lr in learning_rates:
-        ax_val_loss.plot(range(1, num_epochs + 1), results[lr]['av_val_losses'], label=str(lr))
-    ax_val_loss.set_xlabel('Epoch')
-    ax_val_loss.set_ylabel('Average Validation Loss')
-    ax_val_loss.set_title('Losses')
-    ax_val_loss.legend(title='Learning Rates', loc='lower right')
-
-    # Plot average validation accuracy
-    for lr in learning_rates:
-        ax_val_acc.plot(range(1, num_epochs + 1), results[lr]['av_val_acc'], label=str(lr))
-    ax_val_acc.set_xlabel('Epoch')
-    ax_val_acc.set_ylabel('Average Validation Accuracy')
-    ax_val_acc.set_title('Accuracies')
-    ax_val_acc.legend(title='Learning Rates', loc='lower right')
-
-    # Plot smoothed training loss
-    for lr in learning_rates:
-        smoothed_train_loss = np.convolve(results[lr]['av_train_losses'], np.ones(smooth_window) / smooth_window, mode='valid')
-        ax_train_loss_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_train_loss, label=str(lr))
-    ax_train_loss_smoothed.set_xlabel('Epoch')
-    ax_train_loss_smoothed.set_ylabel('Smoothed Training Loss')
-    ax_train_loss_smoothed.set_title('Losses (Smoothed)')
-    ax_train_loss_smoothed.legend(title='Learning Rates', loc='lower right')
-
-    # Plot smoothed training accuracy
-    for lr in learning_rates:
-        smoothed_train_acc = np.convolve(results[lr]['av_train_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
-        ax_train_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_train_acc, label=str(lr))
-    ax_train_acc_smoothed.set_xlabel('Epoch')
-    ax_train_acc_smoothed.set_ylabel('Smoothed Training Accuracy')
-    ax_train_acc_smoothed.set_title('Accuracies (Smoothed)')
-    ax_train_acc_smoothed.legend(title='Learning Rates', loc='lower right')
-
-    # Plot smoothed validation loss
-    for lr in learning_rates:
-        smoothed_val_loss = np.convolve(results[lr]['av_val_losses'], np.ones(smooth_window) / smooth_window, mode='valid')
-        ax_val_loss_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_val_loss, label=str(lr))
-    ax_val_loss_smoothed.set_xlabel('Epoch')
-    ax_val_loss_smoothed.set_ylabel('Smoothed Validation Loss')
-    ax_val_loss_smoothed.set_title('Losses (Smoothed)')
-    ax_val_loss_smoothed.legend(title='Learning Rates', loc='lower right')
-
-    # Plot smoothed validation accuracy
-    for lr in learning_rates:
-        smoothed_val_acc = np.convolve(results[lr]['av_val_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
-        ax_val_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_val_acc, label=str(lr))
-    ax_val_acc_smoothed.set_xlabel('Epoch')
-    ax_val_acc_smoothed.set_ylabel('Smoothed Validation Accuracy')
-    ax_val_acc_smoothed.set_title('Accuracies (Smoothed)')
-    ax_val_acc_smoothed.legend(title='Learning Rates', loc='lower right')
+    plot_metrics(ax_train_loss, results, learning_rates, num_epochs, 'av_train_losses', 'Average Training Loss', variable_name=variable_name)
+    plot_metrics(ax_train_acc, results, learning_rates, num_epochs, 'av_train_acc', 'Average Training Accuracy', variable_name=variable_name)
+    plot_metrics(ax_val_loss, results, learning_rates, num_epochs, 'av_val_losses', 'Average Validation Loss', variable_name=variable_name)
+    plot_metrics(ax_val_acc, results, learning_rates, num_epochs, 'av_val_acc', 'Average Validation Accuracy', variable_name=variable_name)
+    plot_metrics(ax_train_loss_smoothed, results, learning_rates, num_epochs, 'av_train_losses', 'Smoothed Training Loss', smoothed=True, smooth_window=smooth_window, variable_name=variable_name)
+    plot_metrics(ax_train_acc_smoothed, results, learning_rates, num_epochs, 'av_train_acc', 'Smoothed Training Accuracy', smoothed=True, smooth_window=smooth_window, variable_name=variable_name)
+    plot_metrics(ax_val_loss_smoothed, results, learning_rates, num_epochs, 'av_val_losses', 'Smoothed Validation Loss', smoothed=True, smooth_window=smooth_window, variable_name=variable_name)
+    plot_metrics(ax_val_acc_smoothed, results, learning_rates, num_epochs, 'av_val_acc', 'Smoothed Validation Accuracy', smoothed=True, smooth_window=smooth_window, variable_name=variable_name)
 
     if enforce_axis:
-        ax_val_acc.set_ylim(0, 1)
-        ax_val_loss.set_ylim(0, 5)
-        ax_train_acc.set_ylim(0, 1)
-        ax_train_loss.set_ylim(0, 5)
-        ax_val_acc_smoothed.set_ylim(0, 1)
-        ax_val_loss_smoothed.set_ylim(0, 5)
-        ax_train_acc_smoothed.set_ylim(0, 1)
-        ax_train_loss_smoothed.set_ylim(0, 5)
+        for ax in [ax_val_acc, ax_val_loss, ax_train_acc, ax_train_loss,
+                   ax_val_acc_smoothed, ax_val_loss_smoothed, ax_train_acc_smoothed, ax_train_loss_smoothed]:
+            ax.set_ylim(0, 5) if 'Loss' in ax.get_ylabel() else ax.set_ylim(0, 1)
 
-    plt.tight_layout()  # Adjust the spacing and positioning of subplots
+    plt.tight_layout()
     plt.show()
-    # Create an additional figure based on the number of items being compared
-    if len(learning_rates) > 2:
-        fig_acc, (ax_train_acc_new, ax_val_acc_new) = plt.subplots(1, 2, figsize=(12, 4))
-        fig_acc.suptitle('Comparative Accuracies', fontsize=12)
-        # Plot training accuracy
-        for lr in learning_rates:
-            ax_train_acc_new.plot(range(1, num_epochs + 1), results[lr]['av_train_acc'], label=str(lr))
-        ax_train_acc_new.set_xlabel('Epoch')
-        ax_train_acc_new.set_ylabel('Average Training Accuracy')
-        ax_train_acc_new.set_title('Training Accuracy')
-        ax_train_acc_new.legend(title='Learning Rates', loc='lower right')
-        
-        # Plot validation accuracy
-        for lr in learning_rates:
-            ax_val_acc_new.plot(range(1, num_epochs + 1), results[lr]['av_val_acc'], label=str(lr))
-        ax_val_acc_new.set_xlabel('Epoch')
-        ax_val_acc_new.set_ylabel('Average Validation Accuracy')
-        ax_val_acc_new.set_title('Validation Accuracy')
-        ax_val_acc_new.legend(title='Learning Rates', loc='lower right')
-        if enforce_axis:
-            ax_val_acc.set_ylim(0, 1)
-            ax_train_acc.set_ylim(0, 1)
-        plt.tight_layout()
-        plt.show()
-        # Create a new figure for smoothed accuracies
-        fig_acc_smoothed, (ax_train_acc_smoothed, ax_val_acc_smoothed) = plt.subplots(1, 2, figsize=(12, 4))
-        fig_acc_smoothed.suptitle('Comparative Accuracies (Smoothed)', fontsize=12)
-        
-        # Plot smoothed training accuracy
-        for lr in learning_rates:
-            smoothed_train_acc = np.convolve(results[lr]['av_train_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
-            ax_train_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_train_acc, label=str(lr))
-        ax_train_acc_smoothed.set_xlabel('Epoch')
-        ax_train_acc_smoothed.set_ylabel('Average Training Accuracy (Smoothed)')
-        ax_train_acc_smoothed.set_title('Training Accuracy (Smoothed)')
-        ax_train_acc_smoothed.legend(title='Learning Rates', loc='lower right')
-        
-        # Plot smoothed validation accuracy
-        for lr in learning_rates:
-            smoothed_val_acc = np.convolve(results[lr]['av_val_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
-            ax_val_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), smoothed_val_acc, label=str(lr))
-        ax_val_acc_smoothed.set_xlabel('Epoch')
-        ax_val_acc_smoothed.set_ylabel('Average Validation Accuracy (Smoothed)')
-        ax_val_acc_smoothed.set_title('Validation Accuracy (Smoothed)')
-        ax_val_acc_smoothed.legend(title='Learning Rates', loc='lower right')
-        
-        if enforce_axis:
-            ax_val_acc_smoothed.set_ylim(0, 1)
-            ax_train_acc_smoothed.set_ylim(0, 1)
-        
-        plt.tight_layout()
-        plt.show()
 
+    if len(learning_rates) > 2:
+        plot_comparative_metrics(results, learning_rates, num_epochs, 'Comparative Accuracies', 'av_train_acc', 'av_val_acc', enforce_axis)
+        plot_comparative_metrics(results, learning_rates, num_epochs, 'Comparative Accuracies (Smoothed)', 'av_train_acc', 'av_val_acc', enforce_axis, smoothed=True, smooth_window=smooth_window)
     elif len(learning_rates) == 2:
         fig_acc_two, ax_acc_two = plt.subplots(figsize=(6, 4))
         fig_acc_two.suptitle('Comparative Accuracies', fontsize=12)
@@ -515,49 +623,45 @@ def plot_performance_comparison_from_file(path_to_load, enforce_axis=False, smoo
         for lr in learning_rates:
             ax_acc_two.plot(range(1, num_epochs + 1), results[lr]['av_val_acc'], label=f"Validation ({lr})", linestyle='-')
             ax_acc_two.plot(range(1, num_epochs + 1), results[lr]['av_train_acc'], label=f"Training ({lr})", linestyle='--')
-        
+
         ax_acc_two.set_xlabel('Epoch')
         ax_acc_two.set_ylabel('Accuracy')
         ax_acc_two.set_title('Accuracy Comparison')
-        ax_acc_two.legend(loc='upper right')
-        
+        ax_acc_two.legend(loc='lower right')
+
         if enforce_axis:
             ax_acc_two.set_ylim(0, 1)
-            
+
         plt.tight_layout()
         plt.show()
-            
-            # Create an additional figure for smoothed accuracies
-        fig_acc_smoothed, (ax_val_acc_smoothed, ax_train_acc_smoothed) = plt.subplots(1, 2, figsize=(12, 4))
-        fig_acc_smoothed.suptitle('Comparative Accuracies (Smoothed)', fontsize=12)
 
-        # Plot smoothed validation accuracy
-        for lr in learning_rates:
-            smoothed_val_acc = np.convolve(results[lr]['av_val_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
-            ax_val_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2), smoothed_val_acc, label=str(lr))
+        plot_comparative_metrics(results, learning_rates, num_epochs, 'Comparative Accuracies (Smoothed)', 'av_train_acc', 'av_val_acc', enforce_axis, smoothed=True, smooth_window=smooth_window)
 
-        ax_val_acc_smoothed.set_xlabel('Epoch')
-        ax_val_acc_smoothed.set_ylabel('Average Validation Accuracy (Smoothed)')
-        ax_val_acc_smoothed.set_title('Validation Accuracy (Smoothed)')
-        ax_val_acc_smoothed.legend(title='Learning Rates', loc='upper right')
+def plot_metrics(ax, results, learning_rates, num_epochs, metric_key, title, smoothed=False, smooth_window=5, variable_name=None):
+    for lr in learning_rates:
+        if smoothed:
+            metric = np.convolve(results[lr][metric_key], np.ones(smooth_window) / smooth_window, mode='valid')
+            ax.plot(range(smooth_window // 2, num_epochs - smooth_window // 2 + 1), metric, label=str(lr))
+        else:
+            ax.plot(range(1, num_epochs + 1), results[lr][metric_key], label=str(lr))
+    ax.set_xlabel('Epoch')
+    ax.set_ylabel(title)
+    ax.set_title(title)
+    ax.legend(title=variable_name, loc='lower right')
 
-        # Plot smoothed training accuracy
-        for lr in learning_rates:
-            smoothed_train_acc = np.convolve(results[lr]['av_train_acc'], np.ones(smooth_window) / smooth_window, mode='valid')
-        ax_train_acc_smoothed.plot(range(smooth_window // 2, num_epochs - smooth_window // 2), smoothed_train_acc, label=str(lr))
+def plot_comparative_metrics(results, learning_rates, num_epochs, fig_title, train_key, val_key, enforce_axis=False, smoothed=False, smooth_window=5):
+    fig, (ax_train, ax_val) = plt.subplots(1, 2, figsize=(12, 4))
+    fig.suptitle(fig_title, fontsize=12)
 
-        ax_train_acc_smoothed.set_xlabel('Epoch')
-        ax_train_acc_smoothed.set_ylabel('Average Training Accuracy (Smoothed)')
-        ax_train_acc_smoothed.set_title('Training Accuracy (Smoothed)')
-        ax_train_acc_smoothed.legend(title='Learning Rates', loc='upper right')
+    plot_metrics(ax_train, results, learning_rates, num_epochs, train_key, f'Training {fig_title}', smoothed, smooth_window)
+    plot_metrics(ax_val, results, learning_rates, num_epochs, val_key, f'Validation {fig_title}', smoothed, smooth_window)
 
-        if enforce_axis:
-            ax_val_acc_smoothed.set_ylim(0, 1)
-            ax_train_acc_smoothed.set_ylim(0, 1)
-            
-            
-        plt.tight_layout()
-        plt.show()
+    if enforce_axis:
+        ax_train.set_ylim(0, 1)
+        ax_val.set_ylim(0, 1)
+
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_single_train_val_smoothed(train_epoch_losses, val_epoch_losses, train_epoch_accuracy, val_epoch_accuracy, num_epochs, smoothing_window=5, title=None):
